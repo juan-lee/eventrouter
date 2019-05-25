@@ -22,7 +22,7 @@ import (
 	"github.com/golang/glog"
 	"github.com/spf13/viper"
 
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 )
 
 // EventSinkInterface is the interface used to shunt events
@@ -128,6 +128,16 @@ func ManufactureSink() (e EventSinkInterface) {
 
 		go s.Run(make(chan bool))
 		return s
+	case "eventhub":
+		connString := viper.GetString("eventHubConnectionString")
+		if connString == "" {
+			panic("eventhub sink specified but eventHubConnectionString not specified")
+		}
+		eh, err := NewEventHubSink(connString)
+		if err != nil {
+			panic(err.Error())
+		}
+		return eh
 	// case "logfile"
 	default:
 		err := errors.New("Invalid Sink Specified")
