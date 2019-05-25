@@ -12,12 +12,29 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM alpine:3.4
+# build stage
+FROM golang:1.12 as builder
+
 MAINTAINER Timothy St. Clair "tstclair@heptio.com"  
 
+ENV GO111MODULE=on
+
+WORKDIR /app
+
+COPY go.mod .
+COPY go.sum .
+
+RUN go mod download
+
+COPY . .
+
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build
+
+# final stage
+FROM alpine:3.9 as scratch
+COPY --from=builder /app/eventrouter /
+
 RUN apk update --no-cache && apk add ca-certificates
-ADD eventrouter /eventrouter 
 USER nobody:nobody
 
 CMD ["/bin/sh", "-c", "/eventrouter -v 3 -logtostderr"]
-
