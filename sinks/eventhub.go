@@ -27,7 +27,10 @@ func (ehs *EventHubSink) UpdateEvents(eNew *v1.Event, eOld *v1.Event) {
 	var buf bytes.Buffer
 	if _, err := eData.WriteFlattenedJSON(&buf); err == nil {
 		glog.Info(buf.String())
-		ehs.hub.Send(context.TODO(), eventhub.NewEventFromString(buf.String()))
+		err = ehs.hub.Send(context.TODO(), eventhub.NewEventFromString(buf.String()))
+		if err != nil {
+			glog.Error(err)
+		}
 	} else {
 		glog.Warningf("Failed to flatten json: %v", err)
 	}
